@@ -1,0 +1,53 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "staticWebAppName": {
+            "type": "string"
+        },
+        "location": {
+            "type": "string"
+        },
+        "sku": {
+            "type": "string"
+        },
+        "skucode": {
+            "type": "string"
+        },
+        "areStaticSitesDistributedBackendsEnabled": {
+            "type": "bool"
+        },
+        "stagingEnvironmentPolicy": {
+            "type": "string"
+        }
+    },
+    "resources": [
+        {
+            "apiVersion": "2021-01-01",
+            "name": "[parameters('staticWebAppName')]",
+            "type": "Microsoft.Web/staticSites",
+            "location": "[parameters('location')]",
+            "properties": {
+                "areStaticSitesDistributedBackendsEnabled": "[parameters('areStaticSitesDistributedBackendsEnabled')]",
+                "stagingEnvironmentPolicy": "[parameters('stagingEnvironmentPolicy')]"
+            },
+            "sku": {
+                "Tier": "[parameters('sku')]",
+                "Name": "[parameters('skuCode')]"
+            }
+        }
+    ],
+    "variables": {
+        "resourceIdStaticWebApp": "[resourceId('Microsoft.Web/staticSites/', parameters('staticWebAppName'))]"
+    },
+    "outputs": {
+        "deploymentToken": {
+            "type": "string",
+            "value": "[listSecrets(variables('resourceIdStaticWebApp'), '2019-08-01').properties.apiKey]"
+        },        
+        "applicationURL": {
+            "type": "string",
+            "value": "[reference(variables('resourceIdStaticWebApp')).defaultHostname]"
+        }      
+    } 
+}

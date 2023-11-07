@@ -1,0 +1,31 @@
+name: DeployAppGwStaticWebApp
+
+on:
+  workflow_dispatch:
+
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  connect-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      # Log into Azure
+      - name: Log in with Azure
+        uses: azure/login@v1
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      # Deploy ARM template for creating the Static Web App
+      - name: Run ARM deploy
+        uses: azure/arm-deploy@v1
+        id: deploy
+        with:
+          subscriptionId: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          resourceGroupName: ${{ vars.RESOURCE_GROUP }}
+          template: ./arm-templates/template.json
+          parameters: ./arm-templates/parameters.json
+          scope: resourcegroup

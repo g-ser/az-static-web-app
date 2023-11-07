@@ -12,6 +12,9 @@ jobs:
   connect-and-deploy:
     runs-on: ubuntu-latest
     steps:
+      # Checkout the repo
+      - name: Checkout
+        uses: actions/checkout@v4
       # Log into Azure
       - name: Log in with Azure
         uses: azure/login@v1

@@ -14,7 +14,7 @@ Some resources need to pre-exist in Azure in order for the [workflow](/.github/w
 
 A resource group named ```rg-static-web-app``` was created in Azure. The name of the resource group is stored as variable in GitHub settings as in the picture below:
 
-![Adding Variables](/assets/images/AddVariableOnGitHub.png){: width="50%"}
+<img src="./assets/images/AddVariableOnGitHub.png" alt="Adding Variables" width="600" height="300">
 
 Note that the Azure ARM deploy action in the [workflow](/.github/workflows/deploy-AppGw-StaticWebApp.yaml) uses the variable ```RESOURCE_GROUP```
 
@@ -25,11 +25,11 @@ Note that the Azure ARM deploy action in the [workflow](/.github/workflows/deplo
 
 Since the purpose of this repo is to create the needed resources on Azure (e.g., Static Web App, Azure Application Gateway, Azure Virtual Network etc.) using a GitHub action workflow, there is the need for GitHub to authenticate against Azure. This happens thanks to Azure managed identities. One managed identity called ```id-githubactions``` was pre-created. The ```id-githubactions``` is assigned the Contributor role on the pre-created ```rg-static-web-app``` resource group. The ```id-githubactions``` managed identity, uses federated credentials which were created from the Azure portal as in the picture below.
 
-![Adding Federated Credential](/assets/images/AddFederatedCredential.png){: width="50%"}
+<img src="./assets/images/AddFederatedCredential.png" alt="Adding Variables" width="600" height="500">
 
 The ```AZURE_CLIENT_ID```, ```AZURE_SUBSCRIPTION_ID``` and ```AZURE_TENANT_ID``` of ```id-githubactions``` were configured in GitHub settings as in the picture below:
 
-![Adding Secrets on GitHub](/assets/images/AddSecretsOnGitHub.png =250x250)
+<img src="./assets/images/AddSecretsOnGitHub.png" alt="Adding Variables" width="600" height="300">
 
 Note that the Azure login action in the [workflow](/.github/workflows/deploy-AppGw-StaticWebApp.yaml) uses the secrets ```AZURE_CLIENT_ID```, ```AZURE_SUBSCRIPTION_ID``` and ```AZURE_TENANT_ID``` to authenticate with OpenID Connect.
 

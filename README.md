@@ -5,6 +5,7 @@
 The main element of the current repository is a GitHub action [workflow](/.github/workflows/deploy-AppGw-StaticWebApp.yaml). When the workflow is triggered, it creates an Azure Static Web App and an Application Gateway in front of the Static Web App. The other important element is the ARM [template](/arm-templates/template.json) which is invoked by the GitHub action and is responsible for the actual deployment of the resources defined in it (i.e., Azure Static Web App, Application Gateway, VNet etc.). 
 
 <!-- Please note that the GitHub action workflow of the current repo creates the Azure Static Web App **without** deploying any code on top of it. Once the Static Web App is created, Azure generates a deployment token which can be used (e.g.) -->
+## Architecture<a name="architecture"></a>
 
 ## Prerequisites for working with the repo<a name="prerequisites"></a>
 

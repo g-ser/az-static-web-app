@@ -110,7 +110,7 @@
                 {
                     "type": "subnets",
                     "apiVersion": "2023-05-01",
-                    "name": "[parameters('subnetNameApplicationGateway)]",
+                    "name": "[parameters('subnetNameApplicationGateway')]",
                     "properties": {
                         "addressPrefix": "[parameters('subnetApplicationGatewayAddressPrefix')]"
                     }

@@ -8,17 +8,74 @@
         "location": {
             "value": "westeurope"
         },
-        "sku": {
+        "skuStaticWebApp": {
             "value": "Standard"
         },
-        "skucode": {
+        "skuCodeStaticWebApp": {
             "value": "Standard"
         },
         "areStaticSitesDistributedBackendsEnabled": {
             "value": false
         },
+        "vnetAddressPrefix": {
+            "value": "10.0.0.0/16"
+        },
+        "subnetApplicationGatewayAddressPrefix": {
+            "value": "10.0.1.0/24"
+        },
+        "subnetStaticWebAppAddressPrefix": {
+            "value": "10.0.0.0/24"
+        },
         "stagingEnvironmentPolicy": {
             "value": "Disabled"
-        }
+        },
+        "subnetNameStaticWebApp": {
+            "value": "default"
+        },
+        "vnetName": {
+            "value": "AppGwVnet"
+        },
+        "subnetNameApplicationGateway": {
+            "value": "AppGwSubnet"
+        },
+        "appGatewayPublicIPAddressSku": {
+            "value": "Standard"
+        },
+        "appGatewayPublicIPAddressType": {
+            "value": "Static"
+        },
+        "appGatewayBackendPoolName": {
+            "value": "appGatewayBackendPool"
+        },
+        "appGatewayName": {
+            "value": "appGateway"
+        },
+        "appGatewaySku": {
+            "value": "Standard_v2"
+        },
+        "appGatewayFrontendIPName": {
+            "value": "appGatewayFrontendIP"
+        },
+        "appGatewayPublicIPAddressName": {
+            "value": "appGatewayPublicIPAddress"
+        },
+        "appGatewayFrontendPortName": {
+            "value": "appGatewayFrontendPort"
+        },
+        "appGatewayFrontendPort": {
+            "value": 80
+        },
+        "appGatewayBackendHTTPSettingsName": {
+            "value": "appGatewayBackendHTTPSettings"
+        },
+        "appGatewayHTTPListenerName": {
+            "value": "appGatewayHTTPListener"
+        },
+        "appGatewayRuleName": {
+            "value": "appGatewayRule"
+        },
+        "privateDnsZoneName": {
+            "value": "privatelink.azurewebsites.net"
+        }        
     }
 }

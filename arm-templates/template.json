@@ -1,53 +1,376 @@
 {
     "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
-    "parameters": {
-        "staticWebAppName": {
-            "type": "string"
-        },
+    "parameters": { 
         "location": {
             "type": "string"
         },
-        "sku": {
+        "vnetName": {
             "type": "string"
         },
-        "skucode": {
+        "vnetAddressPrefix": {
+            "type": "string"
+        },
+        "subnetNameStaticWebApp": {
+            "type": "string",
+            "metadata": {
+                "description": "The name of the subnet where the private endpoint of the static web app will be created."
+            }
+        },
+        "subnetNameApplicationGateway": {
+            "type": "string",
+            "metadata": {
+                "description": "The name of the subnet where the application gateway will be created."
+            }
+        },
+        "subnetApplicationGatewayAddressPrefix": {
+            "type": "string"
+        },
+        "subnetStaticWebAppAddressPrefix": {
+            "type": "string"
+        },
+        "appGatewayName": {
+            "type": "string"
+        },
+        "appGatewaySku": {
+            "type": "string"
+        },
+        "appGatewayFrontendIPName": {
+            "type": "string"
+        },
+        "appGatewayPublicIPAddressName": {
+            "type": "string"
+        },
+        "appGatewayPublicIPAddressType": {
+            "type": "string"
+        },
+        "appGatewayPublicIPAddressSku": {
+            "type": "string"
+        },
+        "appGatewayFrontendPortName": {
+            "type": "string"
+        },
+        "appGatewayBackendPoolName": {
+            "type": "string"
+        },
+        "appGatewayBackendHTTPSettingsName": {
+            "type": "string"
+        },
+        "appGatewayHTTPListenerName": {
+            "type": "string"
+        },
+        "appGatewayRuleName": {
+            "type": "string"
+        },
+        "staticWebAppName": {
             "type": "string"
         },
         "areStaticSitesDistributedBackendsEnabled": {
             "type": "bool"
         },
         "stagingEnvironmentPolicy": {
+            "type": "object"
+        },
+        "skuStaticWebApp": {
             "type": "string"
+        },
+        "skuCodeStaticWebApp": {
+            "type": "string"
+        },
+        "privateDnsZoneName": {
+            "type": "string"
+        },
+        "appGatewayFrontendPort": {
+            "type": "int"
         }
     },
-    "resources": [
+        "resources": [
         {
-            "apiVersion": "2021-01-01",
+            "type": "Microsoft.Network/virtualNetworks",
+            "description": "Virtual Network",
+            "apiVersion": "2023-05-01",
+            "name": "[parameters('vnetName')]",
+            "comments": "Virtual Network for the static web app and application gateway. It has two subnets, one for the static web app and one for the application gateway.",
+            "location": "[parameters('location')]",
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "[parameters('vnetAddressPrefix')]"
+                    ]
+                }
+            },
+            "resources": [
+                {
+                    "type": "subnets",
+                    "apiVersion": "2023-05-01",
+                    "name": "[parameters('subnetNameStaticWebApp')]",
+                    "properties": {
+                        "addressPrefix": "[parameters('subnetStaticWebAppAddressPrefix')]"
+                    }
+                },
+                {
+                    "type": "subnets",
+                    "apiVersion": "2023-05-01",
+                    "name": "[parameters('subnetNameApplicationGateway)]",
+                    "properties": {
+                        "addressPrefix": "[parameters('subnetApplicationGatewayAddressPrefix')]"
+                    }
+                }
+            ]
+        },
+        {
+            "apiVersion": "2022-09-01",
             "name": "[parameters('staticWebAppName')]",
+            "comments": "Static Web App with a private endpoint",
             "type": "Microsoft.Web/staticSites",
             "location": "[parameters('location')]",
             "properties": {
                 "areStaticSitesDistributedBackendsEnabled": "[parameters('areStaticSitesDistributedBackendsEnabled')]",
-                "stagingEnvironmentPolicy": "[parameters('stagingEnvironmentPolicy')]"
+                "stagingEnvironmentPolicy": "[parameters('stagingEnvironmentPolicy')]",
+                "privateEndpointConnections": [
+                    {
+                        "name": "[concat(parameters('staticWebAppName'), '-vnet-connection')]",
+                        "properties": {
+                            "privateEndpoint": {
+                                "id": "[resourceId('Microsoft.Network/privateEndpoints', concat(parameters('staticWebAppName'), '-private-endpoint'))]"
+                            },
+                            "privateLinkServiceConnectionState": {
+                                "status": "Approved",
+                                "description": "Auto-approved by ARM template",
+                                "actionsRequired": "None"
+                            }
+                        }
+                    }
+                ]
             },
             "sku": {
-                "Tier": "[parameters('sku')]",
-                "Name": "[parameters('skuCode')]"
+                "Tier": "[parameters('skuStaticWebApp')]",
+                "Name": "[parameters('skuCodeStaticWebApp')]"
+            }
+        },
+        {
+            "type": "Microsoft.Network/privateEndpoints",
+            "apiVersion": "2023-04-01",
+            "name": "[concat(parameters('staticWebAppName'), '-private-endpoint')]",
+            "comments": "Private endpoint for the static web app",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[concat('Microsoft.Web/staticSites/', parameters('staticWebAppName'))]",
+                "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), parameters('subnetNameStaticWebApp'))]"
+            ],
+            "properties": {
+                "subnet": {
+                    "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), parameters('subnetNameStaticWebApp'))]"
+                },
+                "privateLinkServiceConnections": [
+                    {
+                        "name": "[concat(parameters('staticWebAppName'), '-private-link-service-connection')]",
+                        "properties": {
+                            "privateLinkServiceId": "[resourceId('Microsoft.Web/staticSites', parameters('staticWebAppName'))]",
+                            "groupIds": [
+                                "staticSite"
+                            ]
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/privateDnsZones",
+            "apiVersion": "2020-06-01",
+            "name": "[parameters('privateDnsZoneName')]",
+            "location": "global",
+            "comments": "Private DNS zone for the static web app",
+            "properties": {},
+            "dependsOn": [
+              "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
+            ]
+        },
+        {
+            "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+            "apiVersion": "2020-06-01",
+            "name": "[format('{0}/{1}', parameters('privateDnsZoneName'), format('{0}-link', parameters('privateDnsZoneName')))]",
+            "location": "global",
+            "comments": "Virtual network link to associate the private DNS zone with the virtual network",
+            "properties": {
+              "registrationEnabled": false,
+              "virtualNetwork": {
+                "id": "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
+              }
+            },
+            "dependsOn": [
+              "[resourceId('Microsoft.Network/privateDnsZones', parameters('privateDnsZoneName'))]",
+              "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
+            ]
+        },
+        {
+            "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
+            "apiVersion": "2023-05-01",
+            "name": "[concat(parameters('staticWebAppName'), '-private-endpoint'), '/default']",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/privateEndpoints', concat(parameters('staticWebAppName'), '-private-endpoint'))]",
+                "[resourceId('Microsoft.Network/privateDnsZones', parameters('privateDnsZoneName'))]"
+            ],
+            "properties": {
+                "privateDnsZoneConfigs": [
+                    {
+                        "name": "privatelink_4_azurestaticapps_net",
+                        "properties": {
+                            "privateDnsZoneId": "[resourceId('Microsoft.Network/privateDnsZones', parameters('privateDnsZoneName'))]"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/publicIPAddresses",
+            "apiVersion": "2023-05-01",
+            "name": "[parameters('appGatewayPublicIPAddressName')]",
+            "location": "[parameters('location')]",
+            "sku": {
+                "name": "[parameters('appGatewayPublicIPAddressSku')]",
+                "tier": "Regional"
+            },
+            "properties": {
+                "publicIPAllocationMethod": "[parameters('appGatewayPublicIPAddressType')]"
+            }
+        },
+        {
+            "type": "Microsoft.Network/applicationGateways",
+            "apiVersion": "2023-05-01",
+            "name": "[parameters('appGatewayName')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[concat('Microsoft.Network/publicIPAddresses/', parameters('appGatewayPublicIPAddressName'))]",
+                "[concat('Microsoft.Network/virtualNetworks/', parameters('vnetName'))]",
+                "[concat('Microsoft.Web/staticSites/', parameters('staticWebAppName'))]"
+            ],
+            "properties": {
+                "sku": {
+                    "name": "[parameters('appGatewaySku')]",
+                    "tier": "Standard_v2"
+                },
+                "gatewayIPConfigurations": [
+                    {
+                        "name": "[parameters('appGatewayFrontendIPName')]",
+                        "properties": {
+                            "subnet": {
+                                "id": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Network/virtualNetworks/', parameters('vnetName'), '/subnets/', parameters('subnetNameApplicationGateway'))]"
+                            }
+                        }
+                    }
+                ],
+                "sslCertificates": [],
+                "trustedRootCertificates": [],
+                "trustedClientCertificates": [],
+                "sslProfiles": [],
+                "frontendIPConfigurations": [
+                    {
+                        "name": "appGwPublicFrontendIpIPv4",
+                        "id": "[concat(resourceId('Microsoft.Network/applicationGateways', parameters('appGatewayName')), '/frontendIPConfigurations/appGwPublicFrontendIpIPv4')]",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "publicIPAddress": {
+                                "id": "[concat(resourceId('Microsoft.Network/publicIPAddresses', parameters('appGatewayPublicIPAddressName')))]"
+                            }
+                        }
+                    }
+                ],
+                "frontendPorts": [
+                    {
+                        "name": "[parameters('appGatewayFrontendPortName')]",
+                        "properties": {
+                            "Port": "[parameters('appGatewayFrontendPort')]"
+                        }
+                    }
+                ],
+                "backendAddressPools": [
+                    {
+                        "name": "[parameters('appGatewayBackendPoolName')]",
+                        "properties": {
+                            "backendAddresses": [
+                                {
+                                    "fqdn": "[reference(concat('Microsoft.Web/staticSites/', parameters('staticWebAppName'), '/privateEndpointConnections/', concat(parameters('staticWebAppName'), '-vnet-connection')), '2021-01-01').privateEndpoint.privateLinkServiceConnectionState.privateEndpointPrivateConnectionProperties.privateIPAddress]"
+                                }
+                            ]
+                        }
+                    }
+                ],
+                "loadDistributionPolicies": [],
+                "backendHttpSettingsCollection": [
+                    {
+                        "name": "[parameters('appGatewayBackendHTTPSettingsName')]",
+                        "properties": {
+                            "port": 443,
+                            "protocol": "Https",
+                            "cookieBasedAffinity": "Disabled",
+                            "pickHostNameFromBackendAddress": true,
+                            "requestTimeout": 20
+                        }
+                    }
+                ],
+                "backendSettingsCollection": [],
+                "httpListeners": [
+                    {
+                        "name": "[parameters('appGatewayHTTPListenerName')]",
+                        "properties": {
+                            "FrontendIPConfiguration": {
+                                "Id": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Network/applicationGateways/', parameters('appGatewayName'), '/frontendIPConfigurations/', parameters('appGatewayFrontendIPName'))]"
+                            },
+                            "FrontendPort": {
+                                "Id": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Network/applicationGateways/', parameters('appGatewayName'), '/frontendPorts/', parameters('appGatewayFrontendPortName'))]"
+                            },
+                            "Protocol": "Http",
+                            "SslCertificate": null,
+                            "RequireServerNameIndication": false,
+                            "HostName": null,
+                            "Path": null,
+                            "RewriteRuleSet": null,
+                            "WebApplicationFirewallPolicyLink": null,
+                            "AuthenticationCertificates": null,
+                            "RedirectConfigurations": null,
+                            "CustomErrorConfigurations": null,
+                            "Probe": null
+                        }
+                    }
+                ],
+                "listeners": [],
+                "urlPathMaps": [],
+                "requestRoutingRules": [
+                    {
+                        "name": "[parameters('appGatewayRuleName')]",
+                        "properties": {
+                            "RuleType": "Basic",
+                            "httpListener": {
+                                "id": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Network/applicationGateways/', parameters('appGatewayName'), '/httpListeners/', parameters('appGatewayHTTPListenerName'))]"
+                            },
+                            "backendAddressPool": {
+                                "id": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Network/applicationGateways/', parameters('appGatewayName'), '/backendAddressPools/', parameters('appGatewayBackendPoolName'))]"
+                            },
+                            "backendHttpSettings": {
+                                "id": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Network/applicationGateways/', parameters('appGatewayName'), '/backendHttpSettingsCollection/', parameters('appGatewayBackendHTTPSettingsName'))]"
+                            },
+                            "urlPathMap": null,
+                            "redirectConfiguration": null,
+                            "rewriteRuleSet": null,
+                            "priority": 0,
+                            "ruleType": "Basic"
+                        }
+                    }
+                ],
+                "routingRules": [],
+                "probes": [],
+                "rewriteRuleSets": [],
+                "redirectConfigurations": [],
+                "privateLinkConfigurations": [],
+                "enableHttp2": true,
+                "autoscaleConfiguration": {
+                    "minCapacity": 0,
+                    "maxCapacity": 10
+                }
             }
         }
-    ],
-    "variables": {
-        "resourceIdStaticWebApp": "[resourceId('Microsoft.Web/staticSites/', parameters('staticWebAppName'))]"
-    },
-    "outputs": {
-        "deploymentToken": {
-            "type": "string",
-            "value": "[listSecrets(variables('resourceIdStaticWebApp'), '2019-08-01').properties.apiKey]"
-        },        
-        "applicationURL": {
-            "type": "string",
-            "value": "[reference(variables('resourceIdStaticWebApp')).defaultHostname]"
-        }      
-    } 
+    ]
 }
+    
+

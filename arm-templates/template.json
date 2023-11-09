@@ -87,7 +87,6 @@
         "resources": [
         {
             "type": "Microsoft.Network/virtualNetworks",
-            "description": "Virtual Network",
             "apiVersion": "2023-05-01",
             "name": "[parameters('vnetName')]",
             "comments": "Virtual Network for the static web app and application gateway. It has two subnets, one for the static web app and one for the application gateway.",

@@ -3,13 +3,12 @@ name: DeployAppGwStaticWebApp
 on:
   workflow_dispatch:
 
-
 permissions:
   id-token: write
   contents: read
 
 jobs:
-  connect-and-deploy:
+  create-stapp-and-appgw:
     runs-on: ubuntu-latest
     steps:
       # Checkout the repo
@@ -25,10 +24,29 @@ jobs:
       # Deploy ARM template for creating the Static Web App
       - name: Run ARM deploy
         uses: azure/arm-deploy@v1
-        id: deploy
+        id: run_arm_deploy
         with:
           subscriptionId: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
           resourceGroupName: ${{ vars.RESOURCE_GROUP }}
           template: ./arm-templates/template.json
           parameters: ./arm-templates/parameters.json
           scope: resourcegroup
+    outputs:
+      deploymentToken: ${{ steps.run_arm_deploy.outputs.deploymentToken }}
+  
+  deploy_job:
+    needs: create-stapp-and-appgw
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: true
+      - name: Build And Deploy
+        id: builddeploy
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ needs.create-stapp-and-appgw.outputs.deploymentToken }}
+          action: "upload"
+          ###### Repository/Build Configurations ######
+          app_location: "src" # App source code path relative to repository root
+

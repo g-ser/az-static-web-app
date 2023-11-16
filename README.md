@@ -36,4 +36,4 @@ Note that the Azure login action in the [workflow](/.github/workflows/deploy-App
 
 ## Provisioning the Static Web App and the Application Gateway by running the GitHub Action Workflow<a name="provisioning_a_static_web_app"></a>
 
-The name of the static web app are hardcoded in [parameters](/arm-templates/parameters.json) file. 
+The name of the static web app is hardcoded in [parameters](/arm-templates/parameters.json) file. 

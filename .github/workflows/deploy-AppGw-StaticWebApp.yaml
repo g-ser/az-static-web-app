@@ -28,8 +28,8 @@ jobs:
         with:
           subscriptionId: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
           resourceGroupName: ${{ vars.RESOURCE_GROUP }}
-          template: ./arm-templates/template.json
-          parameters: ./arm-templates/parameters.json
+          template: ./bicep/main.bicep
+          parameters: ./bicep/main.bicepparam
           scope: resourcegroup
     outputs:
       deploymentToken: ${{ steps.run_arm_deploy.outputs.deploymentToken }}

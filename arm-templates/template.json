@@ -35,6 +35,9 @@
         "appGatewaySku": {
             "type": "string"
         },
+        "appGatewaySkuTier": {
+            "type": "string"
+        },
         "appGatewayFrontendIPName": {
             "type": "string"
         },
@@ -82,6 +85,9 @@
         },
         "appGatewayFrontendPort": {
             "type": "int"
+        },
+        "ApplicationGatewayWebApplicationFirewallPolicyName": {
+            "type": "string"
         }
     },
         "resources": [
@@ -103,6 +109,9 @@
                     "type": "subnets",
                     "apiVersion": "2023-05-01",
                     "name": "[parameters('subnetNameStaticWebApp')]",
+                    "dependsOn": [
+                        "[concat('Microsoft.Network/virtualNetworks/', parameters('vnetName'))]"
+                    ],
                     "properties": {
                         "addressPrefix": "[parameters('subnetStaticWebAppAddressPrefix')]"
                     }
@@ -111,6 +120,9 @@
                     "type": "subnets",
                     "apiVersion": "2023-05-01",
                     "name": "[parameters('subnetNameApplicationGateway')]",
+                    "dependsOn": [
+                        "[concat('Microsoft.Network/virtualNetworks/', parameters('vnetName'))]"
+                    ],
                     "properties": {
                         "addressPrefix": "[parameters('subnetApplicationGatewayAddressPrefix')]"
                     }
@@ -126,21 +138,7 @@
             "properties": {
                 "areStaticSitesDistributedBackendsEnabled": "[parameters('areStaticSitesDistributedBackendsEnabled')]",
                 "stagingEnvironmentPolicy": "[parameters('stagingEnvironmentPolicy')]",
-                "privateEndpointConnections": [
-                    {
-                        "name": "[concat(parameters('staticWebAppName'), '-vnet-connection')]",
-                        "properties": {
-                            "privateEndpoint": {
-                                "id": "[resourceId('Microsoft.Network/privateEndpoints', concat(parameters('staticWebAppName'), '-private-endpoint'))]"
-                            },
-                            "privateLinkServiceConnectionState": {
-                                "status": "Approved",
-                                "description": "Auto-approved by ARM template",
-                                "actionsRequired": "None"
-                            }
-                        }
-                    }
-                ]
+                "customDomains": []
             },
             "sku": {
                 "Tier": "[parameters('skuStaticWebApp')]",
@@ -149,7 +147,7 @@
         },
         {
             "type": "Microsoft.Network/privateEndpoints",
-            "apiVersion": "2023-04-01",
+            "apiVersion": "2023-05-01",
             "name": "[concat(parameters('staticWebAppName'), '-private-endpoint')]",
             "comments": "Private endpoint for the static web app",
             "location": "[parameters('location')]",
@@ -167,13 +165,13 @@
                         "properties": {
                             "privateLinkServiceId": "[resourceId('Microsoft.Web/staticSites', parameters('staticWebAppName'))]",
                             "groupIds": [
-                                "staticSite"
+                                "staticSites"
                             ]
                         }
                     }
                 ]
             }
-        },
+        },  
         {
             "type": "Microsoft.Network/privateDnsZones",
             "apiVersion": "2020-06-01",
@@ -205,7 +203,7 @@
         {
             "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
             "apiVersion": "2023-05-01",
-            "name": "[concat(parameters('staticWebAppName'), '-private-endpoint'), '/default']",
+            "name": "[format('{0}/mydnsgroupname', concat(parameters('staticWebAppName'), '-private-endpoint'))]",
             "dependsOn": [
                 "[resourceId('Microsoft.Network/privateEndpoints', concat(parameters('staticWebAppName'), '-private-endpoint'))]",
                 "[resourceId('Microsoft.Network/privateDnsZones', parameters('privateDnsZoneName'))]"
@@ -213,7 +211,7 @@
             "properties": {
                 "privateDnsZoneConfigs": [
                     {
-                        "name": "privatelink_4_azurestaticapps_net",
+                        "name": "privatelink-4-azurestaticapps-net",
                         "properties": {
                             "privateDnsZoneId": "[resourceId('Microsoft.Network/privateDnsZones', parameters('privateDnsZoneName'))]"
                         }
@@ -242,19 +240,20 @@
             "dependsOn": [
                 "[concat('Microsoft.Network/publicIPAddresses/', parameters('appGatewayPublicIPAddressName'))]",
                 "[concat('Microsoft.Network/virtualNetworks/', parameters('vnetName'))]",
-                "[concat('Microsoft.Web/staticSites/', parameters('staticWebAppName'))]"
+                "[concat('Microsoft.Web/staticSites/', parameters('staticWebAppName'))]",
+                "[concat(resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName')), '/subnets/', parameters('subnetNameApplicationGateway'))]"
             ],
             "properties": {
                 "sku": {
                     "name": "[parameters('appGatewaySku')]",
-                    "tier": "Standard_v2"
+                    "tier": "[parameters('appGatewaySkuTier')]"
                 },
                 "gatewayIPConfigurations": [
                     {
                         "name": "[parameters('appGatewayFrontendIPName')]",
                         "properties": {
                             "subnet": {
-                                "id": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Network/virtualNetworks/', parameters('vnetName'), '/subnets/', parameters('subnetNameApplicationGateway'))]"
+                                "id": "[concat(resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName')), '/subnets/', parameters('subnetNameApplicationGateway'))]"
                             }
                         }
                     }
@@ -289,7 +288,7 @@
                         "properties": {
                             "backendAddresses": [
                                 {
-                                    "fqdn": "[reference(concat('Microsoft.Web/staticSites/', parameters('staticWebAppName'), '/privateEndpointConnections/', concat(parameters('staticWebAppName'), '-vnet-connection')), '2021-01-01').privateEndpoint.privateLinkServiceConnectionState.privateEndpointPrivateConnectionProperties.privateIPAddress]"
+                                    "fqdn": "[reference(variables('resourceIdStaticWebApp')).defaultHostname]"
                                 }
                             ]
                         }
@@ -314,7 +313,7 @@
                         "name": "[parameters('appGatewayHTTPListenerName')]",
                         "properties": {
                             "FrontendIPConfiguration": {
-                                "Id": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Network/applicationGateways/', parameters('appGatewayName'), '/frontendIPConfigurations/', parameters('appGatewayFrontendIPName'))]"
+                                "Id": "[concat(resourceId('Microsoft.Network/applicationGateways', parameters('appGatewayName')), '/frontendIPConfigurations/appGwPublicFrontendIpIPv4')]"
                             },
                             "FrontendPort": {
                                 "Id": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Network/applicationGateways/', parameters('appGatewayName'), '/frontendPorts/', parameters('appGatewayFrontendPortName'))]"
@@ -323,13 +322,7 @@
                             "SslCertificate": null,
                             "RequireServerNameIndication": false,
                             "HostName": null,
-                            "Path": null,
-                            "RewriteRuleSet": null,
-                            "WebApplicationFirewallPolicyLink": null,
-                            "AuthenticationCertificates": null,
-                            "RedirectConfigurations": null,
-                            "CustomErrorConfigurations": null,
-                            "Probe": null
+                            "CustomErrorConfigurations": null
                         }
                     }
                 ],
@@ -352,7 +345,7 @@
                             "urlPathMap": null,
                             "redirectConfiguration": null,
                             "rewriteRuleSet": null,
-                            "priority": 0,
+                            "priority": 1,
                             "ruleType": "Basic"
                         }
                     }
@@ -366,10 +359,54 @@
                 "autoscaleConfiguration": {
                     "minCapacity": 0,
                     "maxCapacity": 10
+                },
+                "firewallPolicy": {
+                    "id": "[concat(resourceId('Microsoft.Network/ApplicationGatewayWebApplicationFirewallPolicies', parameters('ApplicationGatewayWebApplicationFirewallPolicyName')))]"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Network/ApplicationGatewayWebApplicationFirewallPolicies",
+            "apiVersion": "2023-05-01",
+            "name": "[parameters('ApplicationGatewayWebApplicationFirewallPolicyName')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "customRules": [],
+                "policySettings": {
+                    "requestBodyCheck": true,
+                    "maxRequestBodySizeInKb": 128,
+                    "fileUploadLimitInMb": 100,
+                    "state": "Enabled",
+                    "mode": "Detection",
+                    "requestBodyInspectLimitInKB": 128,
+                    "fileUploadEnforcement": true,
+                    "requestBodyEnforcement": true
+                },
+                "managedRules": {
+                    "managedRuleSets": [
+                        {
+                            "ruleSetType": "OWASP",
+                            "ruleSetVersion": "3.2",
+                            "ruleGroupOverrides": []
+                        },
+                        {
+                            "ruleSetType": "Microsoft_BotManagerRuleSet",
+                            "ruleSetVersion": "0.1",
+                            "ruleGroupOverrides": []
+                        }
+                    ],
+                    "exclusions": []
                 }
             }
         }
-    ]
+    ],
+    "variables": {
+        "resourceIdStaticWebApp": "[resourceId('Microsoft.Web/staticSites/', parameters('staticWebAppName'))]"
+    },
+    "outputs": {
+        "deploymentToken": {
+            "type": "string",
+            "value": "[listSecrets(variables('resourceIdStaticWebApp'), '2019-08-01').properties.apiKey]"
+        }   
+    } 
 }
-    
-

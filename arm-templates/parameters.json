@@ -30,13 +30,13 @@
             "value": "Disabled"
         },
         "subnetNameStaticWebApp": {
-            "value": "default"
+            "value": "snet-staticapp"
         },
         "vnetName": {
-            "value": "AppGwVnet"
+            "value": "vnet-agw-test"
         },
         "subnetNameApplicationGateway": {
-            "value": "AppGwSubnet"
+            "value": "snet-agw"
         },
         "appGatewayPublicIPAddressSku": {
             "value": "Standard"
@@ -48,10 +48,13 @@
             "value": "appGatewayBackendPool"
         },
         "appGatewayName": {
-            "value": "appGateway"
+            "value": "agw-test"
         },
         "appGatewaySku": {
-            "value": "Standard_v2"
+            "value": "WAF_v2"
+        },
+        "appGatewaySkuTier": {
+            "value": "WAF_v2"
         },
         "appGatewayFrontendIPName": {
             "value": "appGatewayFrontendIP"
@@ -75,7 +78,10 @@
             "value": "appGatewayRule"
         },
         "privateDnsZoneName": {
-            "value": "privatelink.azurewebsites.net"
-        }        
+            "value": "privatelink.4.azurestaticapps.net"
+        },
+        "ApplicationGatewayWebApplicationFirewallPolicyName": {
+            "value": "testwaf"
+        }
     }
 }

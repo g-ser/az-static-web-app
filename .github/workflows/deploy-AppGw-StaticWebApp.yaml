@@ -41,7 +41,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: true
-        # Log into Azure
+      # Log into Azure
       - name: Log in with Azure
         uses: azure/login@v1
         with:

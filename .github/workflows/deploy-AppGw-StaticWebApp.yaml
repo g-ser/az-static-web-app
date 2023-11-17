@@ -8,34 +8,34 @@ permissions:
   contents: read
 
 jobs:
-  # create-stapp-and-appgw:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     # Checkout the repo
-  #     - name: Checkout
-  #       uses: actions/checkout@v4
-  #     # Log into Azure
-  #     - name: Log in with Azure
-  #       uses: azure/login@v1
-  #       with:
-  #         client-id: ${{ secrets.AZURE_CLIENT_ID }}
-  #         tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-  #         subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-  #     # Deploy ARM template for creating the Static Web App
-  #     - name: Run Bicep deploy
-  #       uses: azure/arm-deploy@v1
-  #       id: run_bicep_deploy
-  #       with:
-  #         subscriptionId: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-  #         resourceGroupName: ${{ vars.RESOURCE_GROUP }}
-  #         template: ./bicep/main.bicep
-  #         parameters: ./bicep/main.bicepparam
-  #         scope: resourcegroup
-  #   outputs:
-  #     staticWebAppName: ${{ steps.run_bicep_deploy.outputs.staticWebAppName }}
+  create-stapp-and-appgw:
+    runs-on: ubuntu-latest
+    steps:
+      # Checkout the repo
+      - name: Checkout
+        uses: actions/checkout@v4
+      # Log into Azure
+      - name: Log in with Azure
+        uses: azure/login@v1
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      # Deploy ARM template for creating the Static Web App
+      - name: Run Bicep deploy
+        uses: azure/arm-deploy@v1
+        id: run_bicep_deploy
+        with:
+          subscriptionId: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          resourceGroupName: ${{ vars.RESOURCE_GROUP }}
+          template: ./bicep/main.bicep
+          parameters: ./bicep/main.bicepparam
+          scope: resourcegroup
+    outputs:
+      staticWebAppName: ${{ steps.run_bicep_deploy.outputs.staticWebAppName }}
   
   deploy_job:
-    # needs: create-stapp-and-appgw
+    needs: create-stapp-and-appgw
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -48,28 +48,14 @@ jobs:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-      # - name: Azure CLI script
-      #   uses: azure/CLI@v1
-      #   id: deployment_token
-      #   with:
-      #     inlineScript: |
-      #       echo "api_key=az staticwebapp secrets list --name ${{ needs.create-stapp-and-appgw.outputs.staticWebAppName }} --resource-group ${{ vars.RESOURCE_GROUP }} --query 'properties.apiKey'" 
-      # - name: Azure CLI script
-      #   uses: azure/CLI@v1
-      #   id: deployment_token
-      #   with:
-      #     inlineScript: |
-      #       echo "APIKEY=$(az staticwebapp secrets list --name stapp-test --resource-group ${{ vars.RESOURCE_GROUP }} | jq -r '.properties.apiKey')" >> $GITHUB_ENV
       - name: Azure CLI script
         uses: azure/CLI@v1
         id: deployment_token
         with:
           inlineScript: |
-            APIKEY=$(az staticwebapp secrets list --name stapp-test --resource-group ${{ vars.RESOURCE_GROUP }} | jq -r '.properties.apiKey')
+            APIKEY=$(az staticwebapp secrets list --name ${{ needs.create-stapp-and-appgw.outputs.staticWebAppName }} --resource-group ${{ vars.RESOURCE_GROUP }} | jq -r '.properties.apiKey')
             echo ::add-mask::$APIKEY
-            echo APIKEY="$APIKEY" >> $GITHUB_ENV            
-      - name: Simple CLI command
-        run: echo ${{ env.APIKEY }}                    
+            echo APIKEY="$APIKEY" >> $GITHUB_ENV                              
       - name: Build And Deploy
         id: builddeploy
         uses: Azure/static-web-apps-deploy@v1

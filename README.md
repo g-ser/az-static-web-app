@@ -6,6 +6,9 @@ The IaC contained in this repository is meant to run using a GitHub action [work
 
 ## Architecture<a name="architecture"></a>
 
+<img src="./assets/images/StaticWebApp.png">
+
+
 ## Prerequisites for working with the repo<a name="prerequisites"></a>
 
 Some resources need to pre-exist in Azure in order for the [workflow](/.github/workflows/deploy-AppGw-StaticWebApp.yaml) to be able to provision the infrastructure described in the ARM [template](/arm-templates/template.json). First of all the resource group where the resources will be provisioned needs to be there. In addition, the [integration](#integration-between-github-actions-and-azure) between GitHub Actions and Azure needs to be in place.
@@ -37,4 +40,4 @@ Note that the Azure login action in the [workflow](/.github/workflows/deploy-App
 
 The name of the static web app is hardcoded in [parameters](/bicep/main.bicepparam/) file. In order to create the setup of the picture illustrated in the [Architecture](#architecture) section, you need to run the workflow ```DeployAppGwStaticWebApp``` as shown in the picture below. Note that the workflow is configured to run manually using the GitHub portal (consider configuring the workflow to run automatically (e.g. on push events) in case you move the setup of the current repo in a real environment).
 
-<img src="./assets/images/runworkflow.png" alt="Adding Variables" width="650" height="350">
+<img src="./assets/images/runworkflow.png" alt="Adding Variables" width="750" height="350">

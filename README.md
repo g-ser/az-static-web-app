@@ -2,7 +2,7 @@
 
 ## Repo Content<a name="repo_content"></a>
 
-The main element of the current repository is a GitHub action [workflow](/.github/workflows/deploy-AppGw-StaticWebApp.yaml). When the workflow is triggered, it creates an Azure Static Web App and an Application Gateway in front of the Static Web App thanks to the ARM [template](/arm-templates/template.json). The invocation of the ARM template happens with the [GitHub Action for ARM deployment](https://github.com/marketplace/actions/deploy-azure-resource-manager-arm-template). Once the infrastructure is provisioned, a second job which uses the [Azure Static Web Apps Deploy](https://github.com/marketplace/actions/azure-static-web-apps-deploy) GitHub action deploys a simple static HTML website on the Azure Static Web App.
+The main element of the current repository is a GitHub action [workflow](/.github/workflows/deploy-AppGw-StaticWebApp.yaml). When the workflow is triggered, it creates an Azure Static Web App and an Application Gateway in front of the Static Web App thanks to the Bicep [template](/bicep/main.bicep). The invocation of the Bicep template happens with the [GitHub Action for ARM deployment](https://github.com/marketplace/actions/deploy-azure-resource-manager-arm-template). Once the infrastructure is provisioned, a second job which uses the [Azure Static Web Apps Deploy](https://github.com/marketplace/actions/azure-static-web-apps-deploy) GitHub action deploys a simple static HTML website on the Azure Static Web App.
 
 ## Architecture<a name="architecture"></a>
 

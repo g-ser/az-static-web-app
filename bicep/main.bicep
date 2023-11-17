@@ -301,4 +301,6 @@ resource ApplicationGatewayWebApplicationFirewallPolicy 'Microsoft.Network/Appli
   }
 }
 
-output deploymentToken string = listSecrets(resourceIdStaticWebApp, '2019-08-01').properties.apiKey
+// output deploymentToken string = listSecrets(resourceIdStaticWebApp, '2019-08-01').properties.apiKey
+
+output staticWebAppName string = staticWebApp.name

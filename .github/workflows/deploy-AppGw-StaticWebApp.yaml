@@ -59,13 +59,12 @@ jobs:
         id: deployment_token
         with:
           inlineScript: |
-            APIKEY=$(az staticwebapp secrets list --name stapp-test --resource-group ${{ vars.RESOURCE_GROUP }} | jq -r '.properties.apiKey')
-            echo "##vso[task.setvariable variable=apiKey;issecret=true]$APIKEY"                         
+            echo "APIKEY=$(az staticwebapp secrets list --name stapp-test --resource-group ${{ vars.RESOURCE_GROUP }} | jq -r '.properties.apiKey')"                       
       - name: Build And Deploy
         id: builddeploy
         uses: Azure/static-web-apps-deploy@v1
         with:
-          azure_static_web_apps_api_token: ${{ steps.deployment_token.outputs.apiKey }}
+          azure_static_web_apps_api_token: ${{ steps.deployment_token.outputs.APIKEY }}
           action: "upload"
           ###### Repository/Build Configurations ######
           app_location: "src" # App source code path relative to repository root

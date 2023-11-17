@@ -59,9 +59,9 @@ jobs:
         id: deployment_token
         with:
           inlineScript: |
-            echo "APIKEY=$(az staticwebapp secrets list --name stapp-test --resource-group ${{ vars.RESOURCE_GROUP }} | jq -r '.properties.apiKey')"
+            echo "APIKEY=$(az staticwebapp secrets list --name stapp-test --resource-group ${{ vars.RESOURCE_GROUP }} | jq -r '.properties.apiKey')" >> $GITHUB_ENV
       - name: Simple CLI command
-        run: echo "The API key is ${{ steps.deployment_token.outputs.APIKEY }}"                       
+        run: echo $APIKEY                      
       # - name: Build And Deploy
       #   id: builddeploy
       #   uses: Azure/static-web-apps-deploy@v1

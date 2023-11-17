@@ -54,12 +54,20 @@ jobs:
       #   with:
       #     inlineScript: |
       #       echo "api_key=az staticwebapp secrets list --name ${{ needs.create-stapp-and-appgw.outputs.staticWebAppName }} --resource-group ${{ vars.RESOURCE_GROUP }} --query 'properties.apiKey'" 
+      # - name: Azure CLI script
+      #   uses: azure/CLI@v1
+      #   id: deployment_token
+      #   with:
+      #     inlineScript: |
+      #       echo "APIKEY=$(az staticwebapp secrets list --name stapp-test --resource-group ${{ vars.RESOURCE_GROUP }} | jq -r '.properties.apiKey')" >> $GITHUB_ENV
       - name: Azure CLI script
         uses: azure/CLI@v1
         id: deployment_token
         with:
           inlineScript: |
-            echo "APIKEY=$(az staticwebapp secrets list --name stapp-test --resource-group ${{ vars.RESOURCE_GROUP }} | jq -r '.properties.apiKey')" >> $GITHUB_ENV
+            APIKEY=$(az staticwebapp secrets list --name stapp-test --resource-group ${{ vars.RESOURCE_GROUP }} | jq -r '.properties.apiKey')
+            echo ::add-mask::$APIKEY
+            echo APIKEY="$APIKEY" >> $GITHUB_ENV            
       - name: Simple CLI command
         run: echo ${{ env.APIKEY }}                    
       - name: Build And Deploy

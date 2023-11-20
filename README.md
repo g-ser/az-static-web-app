@@ -11,7 +11,7 @@ The IaC contained in this repository is meant to run using a GitHub action [work
 
 ## Prerequisites for working with the repo<a name="prerequisites"></a>
 
-Some resources need to pre-exist in Azure in order for the [workflow](/.github/workflows/deploy-AppGw-StaticWebApp.yaml) to be able to provision the infrastructure described in the ARM [template](/arm-templates/template.json). First of all the resource group where the resources will be provisioned needs to be there. In addition, the [integration](#integration-between-github-actions-and-azure) between GitHub Actions and Azure needs to be in place.
+Some resources need to pre-exist in Azure in order for the [workflow](/.github/workflows/deploy-AppGw-StaticWebApp.yaml) to be able to provision the infrastructure described in the Bicep [template](/bicep/main.bicep). First of all the resource group where the resources will be provisioned needs to be there. In addition, the [integration](#integration-between-github-actions-and-azure) between GitHub Actions and Azure needs to be in place.
 
 ### Creation of Resource Group
 

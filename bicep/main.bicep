@@ -18,9 +18,10 @@ param appGatewayPublicIPAddressName string
 param appGatewayPublicIPAddressType string
 param appGatewayPublicIPAddressSku string
 param appGatewayFrontendPortName string
-param appGatewayBackendHTTPSettingsName string
-param appGatewayHTTPListenerName string
-param appGatewayRuleName string
+param appGatewayBackendHTTPSettingsToHostname string
+param appGatewayBackendHTTPSettingsToPath string
+param appGatewayProductionRuleName string
+param appGatewayStagingRuleName string
 param staticWebAppNameProduction string
 param staticWebAppNameStaging string
 param staticWebAppProductionBackendPool string
@@ -31,6 +32,11 @@ param privateDnsZoneName string
 param appGatewayFrontendPort int
 param ApplicationGatewayWebApplicationFirewallPolicyName string
 param staticWebAppStagingBackendPool string
+param productionListenerName string
+param rootDomain string
+param stagingListenerName string
+param subDomainListenerName string
+param appGatewaySubDomainRuleName string
 
 var resourceIdStaticWebAppProduction = staticWebAppProduction.id
 var resourceIdStaticWebAppStaging = staticWebAppStaging.id
@@ -258,7 +264,7 @@ resource appGateway 'Microsoft.Network/applicationGateways@2023-05-01' = {
     loadDistributionPolicies: []
     backendHttpSettingsCollection: [
       {
-        name: appGatewayBackendHTTPSettingsName
+        name: appGatewayBackendHTTPSettingsToHostname
         properties: {
           port: 443
           protocol: 'Https'
@@ -267,11 +273,39 @@ resource appGateway 'Microsoft.Network/applicationGateways@2023-05-01' = {
           requestTimeout: 20
         }
       }
+      {
+        name: appGatewayBackendHTTPSettingsToPath
+        properties: {
+          port: 443
+          protocol: 'Https'
+          cookieBasedAffinity: 'Disabled'
+          pickHostNameFromBackendAddress: true
+          path: '/protein'
+          requestTimeout: 20
+        }
+      }
     ]
     backendSettingsCollection: []
     httpListeners: [
       {
-        name: appGatewayHTTPListenerName
+        name: stagingListenerName // this is related to acceptatie
+        properties: {
+          frontendIPConfiguration: {
+            id: resourceId('Microsoft.Network/applicationGateways/frontendIPConfigurations', appGatewayName, 'appGwPublicFrontendIpIPv4')
+          }
+          frontendPort: {
+            id: resourceId('Microsoft.Network/applicationGateways/frontendPorts', appGatewayName, appGatewayFrontendPortName)
+          }
+          protocol: 'Http'
+          sslCertificate: null
+          requireServerNameIndication: false
+          customErrorConfigurations: null
+          hostNames: []
+          hostName: 'acceptatie.${rootDomain}'
+        }
+      }
+      {
+        name: productionListenerName // this is related to www and root domain
         properties: {
           frontendIPConfiguration: {
             id: resourceId('Microsoft.Network/applicationGateways/frontendIPConfigurations', appGatewayName, 'appGwPublicFrontendIpIPv4')
@@ -284,6 +318,26 @@ resource appGateway 'Microsoft.Network/applicationGateways@2023-05-01' = {
           requireServerNameIndication: false
           hostName: null
           customErrorConfigurations: null
+          hostNames: [
+            'www.${rootDomain}', rootDomain
+          ]
+        }
+      }
+      {
+        name: subDomainListenerName // this is related to protein
+        properties: {
+          frontendIPConfiguration: {
+            id: resourceId('Microsoft.Network/applicationGateways/frontendIPConfigurations', appGatewayName, 'appGwPublicFrontendIpIPv4')
+          }
+          frontendPort: {
+            id: resourceId('Microsoft.Network/applicationGateways/frontendPorts', appGatewayName, appGatewayFrontendPortName)
+          }
+          protocol: 'Http'
+          sslCertificate: null
+          requireServerNameIndication: false
+          hostName: 'protein.${rootDomain}'
+          customErrorConfigurations: null
+          hostNames: []
         }
       }
     ]
@@ -291,22 +345,60 @@ resource appGateway 'Microsoft.Network/applicationGateways@2023-05-01' = {
     urlPathMaps: []
     requestRoutingRules: [
       {
-        name: appGatewayRuleName
+        name: appGatewayProductionRuleName // this is related to www and root
         properties: {
           ruleType: 'Basic'
           httpListener: {
-            id: resourceId('Microsoft.Network/applicationGateways/httpListeners', appGatewayName, appGatewayHTTPListenerName)
+            id: resourceId('Microsoft.Network/applicationGateways/httpListeners', appGatewayName, productionListenerName)
           }
           backendAddressPool: {
             id: resourceId('Microsoft.Network/applicationGateways/backendAddressPools', appGatewayName, staticWebAppProductionBackendPool)
           }
           backendHttpSettings: {
-            id: resourceId('Microsoft.Network/applicationGateways/backendHttpSettingsCollection', appGatewayName, appGatewayBackendHTTPSettingsName)
+            id: resourceId('Microsoft.Network/applicationGateways/backendHttpSettingsCollection', appGatewayName, appGatewayBackendHTTPSettingsToHostname)
           }
           urlPathMap: null
           redirectConfiguration: null
           rewriteRuleSet: null
           priority: 1
+        }
+      }
+      {
+        name: appGatewayStagingRuleName // this is related to acceptatie
+        properties: {
+          ruleType: 'Basic'
+          httpListener: {
+            id: resourceId('Microsoft.Network/applicationGateways/httpListeners', appGatewayName, stagingListenerName)
+          }
+          backendAddressPool: {
+            id: resourceId('Microsoft.Network/applicationGateways/backendAddressPools', appGatewayName, staticWebAppStagingBackendPool)
+          }
+          backendHttpSettings: {
+            id: resourceId('Microsoft.Network/applicationGateways/backendHttpSettingsCollection', appGatewayName, appGatewayBackendHTTPSettingsToHostname)
+          }
+          urlPathMap: null
+          redirectConfiguration: null
+          rewriteRuleSet: null
+          priority: 3
+        }
+      }
+      {
+        name: appGatewaySubDomainRuleName //this is related to protein
+        properties: {
+          ruleType: 'Basic'
+          httpListener: {
+            id: resourceId('Microsoft.Network/applicationGateways/httpListeners', appGatewayName, subDomainListenerName)
+          }
+          backendAddressPool: {
+            id: resourceId('Microsoft.Network/applicationGateways/backendAddressPools', appGatewayName, staticWebAppProductionBackendPool)
+          }
+          backendHttpSettings: {
+            id: resourceId('Microsoft.Network/applicationGateways/backendHttpSettingsCollection', appGatewayName, appGatewayBackendHTTPSettingsToPath)
+          }
+          urlPathMap: null
+          redirectConfiguration: null
+          rewriteRuleSet: null
+          priority: 2
         }
       }
     ]
@@ -365,3 +457,4 @@ resource ApplicationGatewayWebApplicationFirewallPolicy 'Microsoft.Network/Appli
 // output deploymentToken string = listSecrets(resourceIdStaticWebApp, '2019-08-01').properties.apiKey
 
 output staticWebAppNameProduction string = staticWebAppProduction.name
+output staticWebAppNameStaging string = staticWebAppStaging.name

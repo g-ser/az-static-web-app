@@ -150,20 +150,20 @@ resource privateDnsZoneName_privateDnsZoneName_link 'Microsoft.Network/privateDn
   }
 }
 
-resource staticWebAppName_private_endpoint_dnsgroupproduction 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2023-05-01' = {
-  parent: staticWebAppName_private_endpoint_production
-  name: 'dnsgroupproduction'
-  properties: {
-    privateDnsZoneConfigs: [
-      {
-        name: 'privatelink-4-azurestaticapps-net'
-        properties: {
-          privateDnsZoneId: privateDnsZone.id
-        }
-      }
-    ]
-  }
-}
+// resource staticWebAppName_private_endpoint_dnsgroupproduction 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2023-05-01' = {
+//   parent: staticWebAppName_private_endpoint_production
+//   name: 'dnsgroupproduction'
+//   properties: {
+//     privateDnsZoneConfigs: [
+//       {
+//         name: 'privatelink-4-azurestaticapps-net'
+//         properties: {
+//           privateDnsZoneId: privateDnsZone.id
+//         }
+//       }
+//     ]
+//   }
+// }
 
 resource staticWebAppName_private_endpoint_dnsgroupstaging 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2023-05-01' = {
   parent: staticWebAppName_private_endpoint_production

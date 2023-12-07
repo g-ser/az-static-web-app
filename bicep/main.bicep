@@ -18,19 +18,22 @@ param appGatewayPublicIPAddressName string
 param appGatewayPublicIPAddressType string
 param appGatewayPublicIPAddressSku string
 param appGatewayFrontendPortName string
-param appGatewayBackendPoolName string
 param appGatewayBackendHTTPSettingsName string
 param appGatewayHTTPListenerName string
 param appGatewayRuleName string
-param staticWebAppName string
+param staticWebAppNameProduction string
+param staticWebAppNameStaging string
+param staticWebAppProductionBackendPool string
 param stagingEnvironmentPolicy string
 param skuStaticWebApp string
 param skuCodeStaticWebApp string
 param privateDnsZoneName string
 param appGatewayFrontendPort int
 param ApplicationGatewayWebApplicationFirewallPolicyName string
+param staticWebAppStagingBackendPool string
 
-var resourceIdStaticWebApp = staticWebApp.id
+var resourceIdStaticWebAppProduction = staticWebAppProduction.id
+var resourceIdStaticWebAppStaging = staticWebAppStaging.id
 
 resource vnet 'Microsoft.Network/virtualNetworks@2023-05-01' = {
   name: vnetName
@@ -60,8 +63,8 @@ resource vnetName_subnetNameApplicationGateway 'Microsoft.Network/virtualNetwork
   }
 }
 
-resource staticWebApp 'Microsoft.Web/staticSites@2022-09-01' = {
-  name: staticWebAppName
+resource staticWebAppProduction 'Microsoft.Web/staticSites@2022-09-01' = {
+  name: staticWebAppNameProduction
   location: location
   properties: {
     stagingEnvironmentPolicy: stagingEnvironmentPolicy
@@ -72,8 +75,20 @@ resource staticWebApp 'Microsoft.Web/staticSites@2022-09-01' = {
   }
 }
 
-resource staticWebAppName_private_endpoint 'Microsoft.Network/privateEndpoints@2023-05-01' = {
-  name: '${staticWebAppName}-private-endpoint'
+resource staticWebAppStaging 'Microsoft.Web/staticSites@2022-09-01' = {
+  name: staticWebAppNameStaging
+  location: location
+  properties: {
+    stagingEnvironmentPolicy: stagingEnvironmentPolicy
+  }
+  sku: {
+    tier: skuStaticWebApp
+    name: skuCodeStaticWebApp
+  }
+}
+
+resource staticWebAppName_private_endpoint_production 'Microsoft.Network/privateEndpoints@2023-05-01' = {
+  name: '${staticWebAppNameProduction}-private-endpoint'
   location: location
   properties: {
     subnet: {
@@ -81,9 +96,30 @@ resource staticWebAppName_private_endpoint 'Microsoft.Network/privateEndpoints@2
     }
     privateLinkServiceConnections: [
       {
-        name: '${staticWebAppName}-private-link-service-connection'
+        name: '${staticWebAppNameProduction}-private-link-service-connection'
         properties: {
-          privateLinkServiceId: staticWebApp.id
+          privateLinkServiceId: staticWebAppProduction.id
+          groupIds: [
+            'staticSites'
+          ]
+        }
+      }
+    ]
+  }
+}
+
+resource staticWebAppName_private_endpoint_staging 'Microsoft.Network/privateEndpoints@2023-05-01' = {
+  name: '${staticWebAppNameStaging}-private-endpoint'
+  location: location
+  properties: {
+    subnet: {
+      id: vnetName_subnetNameStaticWebApp.id
+    }
+    privateLinkServiceConnections: [
+      {
+        name: '${staticWebAppNameStaging}-private-link-service-connection'
+        properties: {
+          privateLinkServiceId: staticWebAppStaging.id
           groupIds: [
             'staticSites'
           ]
@@ -114,9 +150,24 @@ resource privateDnsZoneName_privateDnsZoneName_link 'Microsoft.Network/privateDn
   }
 }
 
-resource staticWebAppName_private_endpoint_mydnsgroupname 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2023-05-01' = {
-  parent: staticWebAppName_private_endpoint
-  name: 'mydnsgroupname'
+resource staticWebAppName_private_endpoint_dnsgroupproduction 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2023-05-01' = {
+  parent: staticWebAppName_private_endpoint_production
+  name: 'dnsgroupproduction'
+  properties: {
+    privateDnsZoneConfigs: [
+      {
+        name: 'privatelink-4-azurestaticapps-net'
+        properties: {
+          privateDnsZoneId: privateDnsZone.id
+        }
+      }
+    ]
+  }
+}
+
+resource staticWebAppName_private_endpoint_dnsgroupstaging 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2023-05-01' = {
+  parent: staticWebAppName_private_endpoint_production
+  name: 'dnsgroupstaging'
   properties: {
     privateDnsZoneConfigs: [
       {
@@ -184,11 +235,21 @@ resource appGateway 'Microsoft.Network/applicationGateways@2023-05-01' = {
     ]
     backendAddressPools: [
       {
-        name: appGatewayBackendPoolName
+        name: staticWebAppProductionBackendPool
         properties: {
           backendAddresses: [
             {
-              fqdn: reference(resourceIdStaticWebApp).defaultHostname
+              fqdn: reference(resourceIdStaticWebAppProduction).defaultHostname
+            }
+          ]
+        }
+      }
+      {
+        name: staticWebAppStagingBackendPool
+        properties: {
+          backendAddresses: [
+            {
+              fqdn: reference(resourceIdStaticWebAppStaging).defaultHostname
             }
           ]
         }
@@ -237,7 +298,7 @@ resource appGateway 'Microsoft.Network/applicationGateways@2023-05-01' = {
             id: resourceId('Microsoft.Network/applicationGateways/httpListeners', appGatewayName, appGatewayHTTPListenerName)
           }
           backendAddressPool: {
-            id: resourceId('Microsoft.Network/applicationGateways/backendAddressPools', appGatewayName, appGatewayBackendPoolName)
+            id: resourceId('Microsoft.Network/applicationGateways/backendAddressPools', appGatewayName, staticWebAppProductionBackendPool)
           }
           backendHttpSettings: {
             id: resourceId('Microsoft.Network/applicationGateways/backendHttpSettingsCollection', appGatewayName, appGatewayBackendHTTPSettingsName)
@@ -303,4 +364,4 @@ resource ApplicationGatewayWebApplicationFirewallPolicy 'Microsoft.Network/Appli
 
 // output deploymentToken string = listSecrets(resourceIdStaticWebApp, '2019-08-01').properties.apiKey
 
-output staticWebAppName string = staticWebApp.name
+output staticWebAppNameProduction string = staticWebAppProduction.name

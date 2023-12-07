@@ -39,7 +39,7 @@ param stagingListenerName = 'stagingListener'
 param subDomainListenerName = 'proteinListener'
 param productionListenerName = 'productionListener'
 // root domain
-param rootDomain = 'test.com'
+param rootDomain = 'randompro.info'
 // Tier for Application Gateway
 param appGatewaySku = 'WAF_v2'
 param appGatewaySkuTier = 'WAF_v2'

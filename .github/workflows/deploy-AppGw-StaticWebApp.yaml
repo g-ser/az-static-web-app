@@ -32,7 +32,7 @@ jobs:
           parameters: ./bicep/main.bicepparam
           scope: resourcegroup
     outputs:
-      staticWebAppName: ${{ steps.run_bicep_deploy.outputs.staticWebAppName }}
+      staticWebAppNameProduction: ${{ steps.run_bicep_deploy.outputs.staticWebAppNameProduction }}
   
   deploy_job:
     needs: create-stapp-and-appgw
@@ -53,7 +53,7 @@ jobs:
         id: deployment_token
         with:
           inlineScript: |
-            APIKEY=$(az staticwebapp secrets list --name ${{ needs.create-stapp-and-appgw.outputs.staticWebAppName }} --resource-group ${{ vars.RESOURCE_GROUP }} | jq -r '.properties.apiKey')
+            APIKEY=$(az staticwebapp secrets list --name ${{ needs.create-stapp-and-appgw.outputs.staticWebAppNameProduction }} --resource-group ${{ vars.RESOURCE_GROUP }} | jq -r '.properties.apiKey')
             echo ::add-mask::$APIKEY
             echo APIKEY="$APIKEY" >> $GITHUB_ENV                              
       - name: Build And Deploy

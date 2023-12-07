@@ -2,7 +2,7 @@
 
 ## Repo Content<a name="repo_content"></a>
 
-The IaC contained in this repository is meant to run using a GitHub action [workflow](/.github/workflows/deploy-AppGw-StaticWebApp.yaml). When the workflow is triggered, it creates an Azure Static Web App and an Application Gateway in front of the Static Web App thanks to the Bicep [template](/bicep/main.bicep). The invocation of the Bicep template happens with the [GitHub Action for ARM deployment](https://github.com/marketplace/actions/deploy-azure-resource-manager-arm-template). Once the infrastructure is provisioned, a second job which uses the [Azure Static Web Apps Deploy](https://github.com/marketplace/actions/azure-static-web-apps-deploy) GitHub action deploys a simple static HTML website on the Azure Static Web App.
+The IaC contained in this repository is meant to run using a GitHub action [workflow](/.github/workflows/deploy-AppGw-StaticWebApp.yaml). When the workflow is triggered, it creates two Azure Static Web Apps and an Application Gateway in front of the Static Web Apps thanks to the Bicep [template](/bicep/main.bicep). The invocation of the Bicep template happens with the [GitHub Action for ARM deployment](https://github.com/marketplace/actions/deploy-azure-resource-manager-arm-template). Once the infrastructure is provisioned, a second job which uses the [Azure Static Web Apps Deploy](https://github.com/marketplace/actions/azure-static-web-apps-deploy) GitHub action deploys a simple static HTML website on each of the Azure Static Web Apps.
 
 ## Architecture<a name="architecture"></a>
 
@@ -26,7 +26,7 @@ Note that the Azure ARM deploy action in the [workflow](/.github/workflows/deplo
 > [!NOTE] 
 > For details about integrating GitHub Actions with Azure using managed identities together with Federated Credentials check the article: [Use GitHub Actions with User-Assigned Managed Identity](https://yourazurecoach.com/2022/12/29/use-github-actions-with-user-assigned-managed-identity/)
 
-Since the purpose of this repo is to create the needed resources on Azure (e.g., Static Web App, Azure Application Gateway, Azure Virtual Network etc.) using a GitHub action workflow, there is the need for GitHub to authenticate against Azure. This happens thanks to Azure managed identities. One managed identity called ```id-githubactions``` was pre-created. The ```id-githubactions``` is assigned the Contributor role on the pre-created ```rg-static-web-app``` resource group. The ```id-githubactions``` managed identity, uses federated credentials which were created from the Azure portal as in the picture below.
+Since the purpose of this repo is to create the needed resources on Azure (e.g., Static Web Apps, Azure Application Gateway, Azure Virtual Network etc.) using a GitHub action workflow, there is the need for GitHub to authenticate against Azure. This happens thanks to Azure managed identities. One managed identity called ```id-githubactions``` was pre-created. The ```id-githubactions``` is assigned the Contributor role on the pre-created ```rg-static-web-app``` resource group. The ```id-githubactions``` managed identity, uses federated credentials which were created from the Azure portal as in the picture below.
 
 <img src="./assets/images/AddFederatedCredential.png" alt="Adding Variables" width="600" height="500">
 
@@ -38,6 +38,6 @@ Note that the Azure login action in the [workflow](/.github/workflows/deploy-App
 
 ## Provisioning the Static Web App and the Application Gateway by running the GitHub Action Workflow<a name="provisioning_a_static_web_app"></a>
 
-The name of the static web app is hardcoded in [parameters](/bicep/main.bicepparam/) file. In order to create the setup of the picture illustrated in the [Architecture](#architecture) section, you need to run the workflow ```DeployAppGwStaticWebApp``` as shown in the picture below. Note that the workflow is configured to run manually using the GitHub portal (consider configuring the workflow to run automatically (e.g. on push events) in case you move the setup of the current repo in a real environment).
+The name of the static web apps is hardcoded in [parameters](/bicep/main.bicepparam/) file. In order to create the setup of the picture illustrated in the [Architecture](#architecture) section, you need to run the workflow ```DeployAppGwStaticWebApp``` as shown in the picture below. Note that the workflow is configured to run manually using the GitHub portal (consider configuring the workflow to run automatically (e.g. on push events) in case you move the setup of the current repo in a real environment).
 
 <img src="./assets/images/runworkflow.png" alt="Adding Variables" width="750" height="350">

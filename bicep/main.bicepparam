@@ -31,8 +31,8 @@ param staticWebAppProductionBackendPool = 'staticWebAppProductionBackendPool'
 param appGatewayBackendHTTPSettingsToHostname = 'forwardToHost'
 param appGatewayBackendHTTPSettingsToPath = 'forwardToPath'
 // Rules
-param appGatewayProductionRuleName = 'appGatewayProductionRule'
-param appGatewayStagingRuleName = 'appGatewayStagingRule'
+param appGatewayProductionRuleName = 'productionRule'
+param appGatewayStagingRuleName = 'stagingRule'
 param appGatewaySubDomainRuleName = 'proteinRule'
 // Listeners
 param stagingListenerName = 'stagingListener'
